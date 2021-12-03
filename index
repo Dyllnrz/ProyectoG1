@@ -1,0 +1,218 @@
+from tkinter import*
+from tkinter import ttk
+from tkinter import messagebox
+import pymongo
+from bson.objectid import ObjectId
+
+MONGO_HOST="localhost"
+MONGO_PUERTO="27017"
+MONGO_TIEMPO_FUERA=1000
+
+MONGO_URI="mongodb://"+MONGO_HOST+":"+MONGO_PUERTO+"/"
+
+MONGO_BASEDATOS="bibliotecaG1"
+MONGO_COLECCION="clientes"
+cliente=pymongo.MongoClient(MONGO_URI,serverSelectionTimeoutMS=MONGO_TIEMPO_FUERA)
+baseDatos=cliente[MONGO_BASEDATOS]
+coleccion=baseDatos[MONGO_COLECCION]
+ID_CLIENTES=""
+#Mostrar los registros
+def mostrarDatos(cedula="",fecha="",nombrecliente="",apellidocliente="",titulolibro="",autorlibro="",generolibro="",fechaentrega="",pago=""):
+    objetoBuscar={}
+    if len(cedula)!=0:
+        objetoBuscar["cedula"]=cedula
+    if len(fecha)!=0:
+        objetoBuscar["fecha"]=fecha
+    if len(nombrecliente)!=0:
+        objetoBuscar["nombrecliente"]=nombrecliente
+    if len(apellidocliente)!=0:
+        objetoBuscar["apellidocliente"]=apellidocliente
+    if len(titulolibro)!=0:
+        objetoBuscar["titulolibro"]=titulolibro
+    if len(autorlibro)!=0:
+        objetoBuscar["autorlibro"]=autorlibro
+    if len(generolibro)!=0:
+        objetoBuscar["generolibro"]=generolibro
+    if len(fechaentrega)!=0:
+        objetoBuscar["fechaentrega"]=fechaentrega
+    if len(pago)!=0:
+        objetoBuscar["pago"]=pago
+
+    try:
+        registros=tabla.get_children()
+        for registro in registros:
+            tabla.delete(registro)
+        for documento in coleccion.find(objetoBuscar):
+            tabla.insert('',0,text=documento["_id"],values=documento["nombrecliente"])
+    except pymongo.errors.ServerSelectionTimeoutError as errorTiempo:
+        print("Tiempo excedido "+errorTiempo)
+    except pymongo.errors.ConnectionFailure as errorConexion:
+        print("Falló al conectarse a mongodb "+errorConexion)
+#Crear un registro
+def crearRegistro():
+    if len(cedula.get())!=0 and len(fecha.get())!=0 and len(nombrecliente.get())!=0 and len(apellidocliente.get())!=0 and len(titulolibro.get())!=0 and len(autorlibro.get())!=0 and len(generolibro.get())!=0 and len(fechaentrega.get())!=0 and len(pago.get())!=0:
+        try:
+            documento={'cedula':cedula.get(),'fecha':fecha.get(),'nombrecliente':nombrecliente.get(),'apellidocliente' : apellidocliente.get(), 'titulolibro' : titulolibro.get(), 'autorlibro' : autorlibro.get(),'generolibro' : generolibro.get(),'fechaentrega' : fechaentrega.get(),'pago' : pago.get()}
+            coleccion.insert_one(documento)
+            cedula.delete(0,END)
+            fecha.delete(0,END)
+            nombrecliente.delete(0,END)
+            apellidocliente.delete(0,END)
+            titulolibro.delete(0,END)
+            autorlibro.delete(0,END)
+            generolibro.delete(0,END)
+            fechaentrega.delete(0,END)
+            pago.delete(0,END)
+        except pymongo.errors.ConnectionFailure as error:
+            print(error)
+    else:
+        messagebox.showerror(message="Los campos no pueden estar vacios")
+    mostrarDatos()
+    cliente.server_info()
+    cliente.close()
+    #doble clic en la tablaa
+def dobleClickTabla(event):
+    global ID_CLIENTES
+    ID_CLIENTES=str(tabla.item(tabla.selection())["text"])
+    #print(ID_CLIENTES)
+    documento=coleccion.find({"_id":ObjectId(ID_CLIENTES)})[0]
+    #print(documento)
+    cedula.delete(0,END)
+    cedula.insert(0,documento["cedula"])
+    fecha.delete(0,END)
+    fecha.insert(0,documento["fecha"])
+    nombrecliente.delete(0,END)
+    nombrecliente.insert(0,documento["nombrecliente"])
+    apellidocliente.delete(0,END)
+    apellidocliente.insert(0,documento["apellidocliente"])
+    titulolibro.delete(0,END)
+    titulolibro.insert(0,documento["titulolibro"])
+    autorlibro.delete(0,END)
+    autorlibro.insert(0,documento["autorlibro"])
+    generolibro.delete(0,END)
+    generolibro.insert(0,documento["generolibro"])
+    fechaentrega.delete(0,END)
+    fechaentrega.insert(0,documento["fechaentrega"])
+    pago.delete(0,END)
+    pago.insert(0,documento["pago"])
+    crear["state"]="disabled"
+    editar["state"]="normal"
+    borrar["state"]="normal"
+def editarRegistro():
+    global ID_CLIENTES
+    if len(cedula.get())!=0 and len(fecha.get())!=0 and len(nombrecliente.get())!=0 and len(apellidocliente.get())!=0 and len(titulolibro.get())!=0 and len(autorlibro.get())!=0 and len(generolibro.get())!=0 and len(fechaentrega.get())!=0 and len(pago.get())!=0 :
+        try:
+            idBuscar={"_id":ObjectId(ID_CLIENTES)}
+            nuevosValores={'cedula':cedula.get(),'fecha':fecha.get(),'nombrecliente':nombrecliente.get(),'apellidocliente' : apellidocliente.get(), 'titulolibro' : titulolibro.get(), 'autorlibro' : autorlibro.get(),'generolibro' : generolibro.get(),'fechaentrega' : fechaentrega.get(),'pago' : pago.get()}
+            coleccion.update_one(idBuscar,{"$set":nuevosValores})
+            cedula.delete(0,END)
+            fecha.delete(0,END)
+            nombrecliente.delete(0,END)
+            apellidocliente.delete(0,END)
+            titulolibro.delete(0,END)
+            autorlibro.delete(0,END)
+            generolibro.delete(0,END)
+            fechaentrega.delete(0,END)
+            pago.delete(0,END)
+        except pymongo.errors.ConnectionFailure as error:
+            print(error)
+    else:
+        messagebox.showerror("Los campos no pueden estar vacios")
+    mostrarDatos()
+    crear["state"]="normal"
+    editar["state"]="disabled"
+    borrar["state"]="normal"
+def borrarRegistro():
+    global ID_CLIENTES
+    try:
+        idBuscar={"_id":ObjectId(ID_CLIENTES)}
+        coleccion.delete_one(idBuscar)
+        cedula.delete(0,END)
+        fecha.delete(0,END)
+        nombrecliente.delete(0,END)
+        apellidocliente.delete(0,END)
+        titulolibro.delete(0,END)
+        autorlibro.delete(0,END)
+        generolibro.delete(0,END)
+        fechaentrega.delete(0,END)
+        pago.delete(0,END)
+    except pymongo.errors.ConnectionFailure as error:
+        print(error)
+    crear["state"]="normal"
+    editar["state"]="normal"
+    borrar["state"]="normal"
+    mostrarDatos()
+ventana = Tk()
+ventana.geometry("650x650")
+ventana.title("Proyecto Bases de datos G1")
+ventana.resizable(False,False)
+ventana.config(background = "#cca9dd")
+main_title = Label(text = "PROYECTO GRUPO 1", font = ("Cambria", 14), bg = "#FFFFFF", fg = "black", width = "500", height = "2")
+main_title.pack()
+tabla=ttk.Treeview(ventana,columns=1)
+tabla.place(x = 120, y = 50)
+tabla.heading("#0",text="ID")
+tabla.heading("#1",text="Nombre")
+tabla.bind("<Double-Button-1>", dobleClickTabla)
+
+# Define Label Fields 
+#Cedula
+cedula = Label(text = "Cedula", bg = "#f7bd56")
+cedula.place(x = 155, y = 280)
+cedula=Entry(ventana)
+cedula.place(x=120, y=305)
+#Fecha
+fecha = Label(text = "Fecha", bg = "#f7bd56")
+fecha.place(x = 440, y = 280)
+fecha=Entry(ventana)
+fecha.place(x=400, y=305)
+#Nombre
+nombrecliente = Label(text = "Nombre", bg = "#f7bd56")
+nombrecliente.place(x = 155, y = 340)
+nombrecliente=Entry(ventana)
+nombrecliente.place(x=120, y=375)
+#Apellido
+apellidocliente = Label(text = "Apellido", bg = "#f7bd56")
+apellidocliente.place(x = 440, y = 340)
+apellidocliente = Entry(ventana)
+apellidocliente.place(x = 400, y =375 )
+#Titulo_Libro
+titulolibro = Label(text = "Título Libro", bg = "#f7bd56")
+titulolibro.place(x = 148, y = 410)
+titulolibro = Entry(ventana)
+titulolibro.place(x = 118, y =445 )
+#Autor_Libro
+autorlibro = Label(text = "Autor Libro", bg = "#f7bd56")
+autorlibro.place(x = 430, y = 410)
+autorlibro = Entry(ventana)
+autorlibro.place(x = 400, y = 445 )
+#Genero
+generolibro = Label(text = "Genero Libro", bg = "#f7bd56")
+generolibro.place(x = 148, y = 480)
+generolibro = Entry(ventana)
+generolibro.place(x = 118, y =510 )
+#Fecha_Entrega
+fechaentrega = Label(text = "Fecha Entrega", bg = "#f7bd56")
+fechaentrega.place(x = 430, y = 480)
+fechaentrega = Entry(ventana)
+fechaentrega.place(x = 400, y =510 )
+#Pago
+pago = Label(text = "Pago", bg = "#f7bd56")
+pago.place(x = 165, y = 540)
+pago = Entry(ventana)
+pago.place(x = 118, y =570 )
+#Botón Crear
+crear=Button(ventana,text="INGRESO LIBRO",command=crearRegistro,bg="#619EEB")
+crear.place(x = 320, y = 550)
+crear["state"]="normal"
+#Botón Editar
+editar=Button(ventana,text="EDITAR LIBRO",command=editarRegistro,bg="#82E0AA")
+editar.place(x= 415, y = 550)
+editar["state"]="disabled"
+#Botón Borrar
+borrar=Button(ventana,text="BORRAR LIBRO",command=borrarRegistro,bg="#ff6961")
+borrar.place(x=500, y = 550 )
+borrar["state"]="disabled"
+
+mostrarDatos()
+ventana.mainloop()
