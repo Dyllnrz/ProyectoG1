@@ -1,0 +1,12 @@
+use bibliotecaG1
+db.clientes.insert({
+"cedula" : "1725053555",
+"fecha" : "2021-12-01",
+"nombrecliente" : "Juan", 
+"apellidocliente" : "Valdez",
+"titulolibro":"El Principito", 
+"autorlibro":"Antoine de Saint-Exupéry", 
+"generolibro":"Novela",
+"fechaentrega" : "2022-01-10",
+"pago" : "$10"
+})
